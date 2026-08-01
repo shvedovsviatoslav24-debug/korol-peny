@@ -256,6 +256,9 @@
       <div class="n" id="raceTitle">Рейс #…</div>
       <div class="d" id="dailyInfo"></div>
     </div>
+    <div id="updBar" class="hrow" style="display:none; margin-top:10px; border-color:var(--gold); cursor:pointer; width:100%;">
+      <span class="ic">🌊</span><span><b>Вышла новая версия игры</b> — тапни здесь, чтобы обновить</span>
+    </div>
     <div class="howto">
       <div class="hrow"><span class="ic">🌬</span><span><b>Держи кнопку</b> — волна растёт. Отпусти выше борта — корабль тонет, золото твоё.</span></div>
       <div class="hrow"><span class="ic">🧜</span><span>Русалки песней <b>замедляют корабли</b>, но каждые 20 с берут <b style="color:#f0a0a0">четверть золота</b>. Нечем платить — конец.</span></div>
@@ -263,7 +266,7 @@
       <div class="hrow"><span class="ic">🏝</span><span><b>На берег можно уйти в любой миг</b> — с тем, что нажил. Вопрос один: когда?</span></div>
     </div>
     <button id="btnGo">Выйти в море</button>
-    <div class="sound-hint">🔊 включи звук — море подскажет · <span id="ver" style="text-decoration:underline dotted">v0.11</span></div>
+    <div class="sound-hint">🔊 включи звук — море подскажет · <span id="ver" style="text-decoration:underline dotted">v0.11.1</span></div>
   </section>
 
   <!-- ИГРА -->
@@ -532,7 +535,7 @@ const LS={ get:(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:JSO
    TELEMETRY_URL='' — только локальная статистика (тап по версии на старте).
    Впиши сюда свой endpoint (POST JSON) — например воркер на локальной инфре. */
 const TELEMETRY_URL='https://script.google.com/macros/s/AKfycbztkfau6Ms1KACzNTWsW516zDzuvzF-_Hc18SCJcWX-uFDAiRCogSOwtUhaVCbEgHHN/exec';
-const GAME_VER='0.11';
+const GAME_VER='0.11.1';
 /* анонимный id устройства — отличать игроков, не зная кто они */
 let CID=LS.get('kp_cid',null);
 if(!CID){ CID=Math.random().toString(36).slice(2,10); LS.set('kp_cid',CID); }
@@ -1118,6 +1121,18 @@ window.addEventListener('pagehide',()=>{
     quitSent=true; recordRun('quit');
   }
 });
+
+/* авто-детект новой версии: сравниваем ETag страницы */
+if(location.protocol.indexOf('http')===0){
+  fetch(location.pathname,{method:'HEAD',cache:'no-store'}).then(r=>{
+    const et=r.headers.get('etag')||r.headers.get('last-modified')||'';
+    const prev=LS.get('kp_etag','');
+    if(prev&&et&&prev!==et){
+      const b=$('updBar'); b.style.display='flex';
+      b.onclick=()=>{ LS.set('kp_etag',et); location.href=location.pathname+'?upd='+Date.now(); };
+    }else if(et){ LS.set('kp_etag',et); }
+  }).catch(()=>{});
+}
 
 setSky(0);
 updateStart();
